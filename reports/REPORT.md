@@ -88,11 +88,11 @@ Không chỉ ghi “cẩn thận hơn khi gán”. -->
 
 | Chỉ số | yolo26n-pose gốc | Sau fine-tune | Chênh |
 | --- | ---: | ---: | ---: |
-| pose_mAP50 | | | |
-| pose_mAP50-95 | | | |
-| pose_precision | | | |
-| pose_recall | | | |
-| box_mAP50-95 | | | |
+| pose_mAP50 | 0.845 | 0.845 | 0.0 |
+| pose_mAP50-95 | 0.6853 | 0.6908 | 0.0055 |
+| pose_precision | 0.9734 | 0.9792 | 0.0058 |
+| pose_recall | 0.8462 | 0.8462 | 0.0 |
+| box_mAP50-95 | 0.8119 | 0.8041 | -0.0078 |
 
 ### Trả lời năm câu hỏi ở cuối notebook
 
@@ -101,23 +101,33 @@ Không chỉ ghi “cẩn thận hơn khi gán”. -->
 
 1. `pose_mAP50-95` thay đổi bao nhiêu? Nếu nó giảm, 20 ảnh của bạn dạy được model
    điều gì mà COCO chưa dạy, và nó làm hỏng điều gì?
+   Tăng 0.055 (từ 0.6853 lên 0.6908). Mức tăng nhỏ, chưa đủ kết luận model “giỏi hơn hẳn”; chỉ cho thấy nhãn của tôi không phá hỏng hoàn toàn kiến thức gốc.
+
 
 2. `box_mAP` và `pose_mAP` chênh nhau bao nhiêu? Model tìm *người* dễ hơn hay tìm
    *khớp* dễ hơn? Vì sao?
+   Sau fine-tune box_mAP50-95 = 0.8041 và pose_mAP50-95 = 0.6908 tăng 0.1133.
+   Model tìm người (box_mAP) dễ hơn rất nhiều so với việc định vị chính xác các khớp (pose_mAP).
+   Vì bài toán phát hiện khung bao người (box) chỉ yêu cầu xác định ranh giới vùng chứa đối tượng (coi người là một khối tổng thể), trong khi dự đoán tư thế (pose) đòi hỏi độ chính xác đến từng pixel của 17 điểm khớp nhỏ trên cơ thể. Bất kỳ sai lệch nhỏ nào về góc khuất, trang phục che lấp hay khớp bị khuất tầm nhìn cũng sẽ làm OKS giảm và tính điểm sai ở pose_mAP. 
 
 3. Một ảnh test model đoán sai - gọi tên lỗi theo bốn loại của slide 43
    (lệch nhẹ / đảo trái/phải / nhầm người / trượt hẳn):
+   Theo e thì hình test_02 person 0.31 đó là con chim nhưng mô hình gán đó là người và đây là lỗi trượt hẳn. Khi mà mô hình đã xác định sai đối tượng.
 
 4. Ảnh nào có OKS thấp nhất giữa nhãn của bạn và model? Ai đúng, và bạn dựa vào đâu?
+   Ảnh train_06 có OKS = 0.605 thấp nhất. Annotator đúng, căn cứ vào luật nhóm đã thống nhất và thực tế hình ảnh (như trường hợp người ngồi ngược hướng camera hoặc bị khuất góc nhìn ở ảnh train_06), vị trí các khớp trên cơ thể đối tượng không thể quan sát hoặc xác định rõ ràng bằng mắt thường từ góc máy đó.
 
 5. Ảnh bạn gán tệ nhất có *cũng* là ảnh model đoán tệ nhất không? Nếu có, điều đó
    nói gì về bức ảnh đó?
+   ảnh em train tệ nhất: train_15 = 0.6702
+   ảnh model tệ nhất: train_06 = 0.605
 
 ## 5. Một rule evidence bạn đã dùng
 
 Chọn một keypoint trong ảnh core mà bạn phải quyết định giữa `v=1` và `v=0`. Nêu ảnh, người,
 khớp, bằng chứng nhìn thấy và lý do chọn trạng thái đó trong 3-5 câu.
 
+ảnh train_06 khớp nose. Phần mũi bị ngược lại với hướng camera chụp nhưng theo cấu trúc cơ thể người thì có thể đoán được vị trí. chọn v=1 không Outside. Nếu để v=0, khớp này bị loại khỏi điểm OKS và model sẽ học rằng “ khuất góc nhìn = không có khớp mũi trên mặt người”.
 <!-- Cấu trúc gợi ý: (1) train_XX + người thứ mấy + keypoint; (2) căn cứ thị giác như phần cơ
 thể liền kề, trang phục hoặc vật che; (3) vì sao khớp còn trong khung (v=1) hay đã ra khỏi
 khung (v=0). -->
